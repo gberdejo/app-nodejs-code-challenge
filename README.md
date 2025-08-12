@@ -1,82 +1,264 @@
-# Yape Code Challenge :rocket:
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
 
-Our code challenge will let you marvel us with your Jedi coding skills :smile:. 
+# 🏦 Sistema de Evaluación Antifraud
 
-Don't forget that the proper way to submit your work is to fork the repo and create a PR :wink: ... have fun !!
+Un sistema distribuido de procesamiento de transacciones con evaluación antifraud en tiempo real, construido con **NestJS**, **GraphQL**, **Kafka** y **PostgreSQL**.
 
-- [Problem](#problem)
-- [Tech Stack](#tech_stack)
-- [Send us your challenge](#send_us_your_challenge)
+## 📋 Descripción del Proyecto
 
-# Problem
+Este proyecto implementa un sistema de transacciones financieras con las siguientes características principales:
 
-Every time a financial transaction is created it must be validated by our anti-fraud microservice and then the same service sends a message back to update the transaction status.
-For now, we have only three transaction statuses:
+- **API GraphQL** para gestión de transacciones
+- **Evaluación antifraud** automática en tiempo real
+- **Arquitectura basada en eventos** con Apache Kafka
+- **Patrón Outbox** para garantizar consistencia de datos
+- **Débezium CDC** para captura de cambios de datos
+- **Auditoría completa** con historial de estados
 
-<ol>
-  <li>pending</li>
-  <li>approved</li>
-  <li>rejected</li>  
-</ol>
+## 🚀 Tecnologías Utilizadas
 
-Every transaction with a value greater than 1000 should be rejected.
+### **Backend**
+- **NestJS** - Framework Node.js para APIs escalables
+- **TypeScript** - Lenguaje de programación tipado
+- **GraphQL** - API query language y runtime
 
-```mermaid
-  flowchart LR
-    Transaction -- Save Transaction with pending Status --> transactionDatabase[(Database)]
-    Transaction --Send transaction Created event--> Anti-Fraud
-    Anti-Fraud -- Send transaction Status Approved event--> Transaction
-    Anti-Fraud -- Send transaction Status Rejected event--> Transaction
-    Transaction -- Update transaction Status event--> transactionDatabase[(Database)]
+### **Base de Datos**
+- **PostgreSQL** - Base de datos relacional principal
+- **TypeORM** - ORM para TypeScript y JavaScript
+
+### **Arquitectura de Eventos**
+- **Apache Kafka** - Plataforma de streaming de eventos
+- **Débezium** - Plataforma de captura de cambios de datos (CDC)
+- **Kafka Connect** - Framework para conectores
+
+### **Monitoreo y Auditoría**
+- **Winston** - Logger para Node.js
+- **Event Sourcing** - Patrón para auditoría de eventos
+
+## 🏗️ Arquitectura del Sistema
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   GraphQL API   │    │  Transaction     │    │   PostgreSQL    │
+│                 │────│  Service         │────│   Database      │
+│ - Mutations     │    │                  │    │                 │
+│ - Queries       │    │ - Create TX      │    │ - Transactions  │
+└─────────────────┘    │ - Update Status  │    │ - Evaluations   │
+                       └──────────────────┘    │ - Outbox        │
+                                │              └─────────────────┘
+                                │                        │
+                       ┌──────────────────┐              │
+                       │  Outbox Event    │              │
+                       │  Publisher       │◄─────────────┘
+                       └──────────────────┘
+                                │
+                                ▼
+                       ┌──────────────────┐    ┌─────────────────┐
+                       │  Apache Kafka    │    │  Antifraud      │
+                       │                  │────│  Service        │
+                       │ - tx.created     │    │                 │
+                       │ - evaluation.*   │    │ - Rules Engine  │
+                       └──────────────────┘    │ - Risk Scoring  │
+                                │              └─────────────────┘
+                                │
+                       ┌──────────────────┐
+                       │ Transaction      │
+                       │ Events Consumer  │
+                       │                  │
+                       │ - Status Updates │
+                       └──────────────────┘
 ```
 
-# Tech Stack
+## 🛠️ Configuración del Proyecto
 
-<ol>
-  <li>Node. You can use any framework you want (i.e. Nestjs with an ORM like TypeOrm or Prisma) </li>
-  <li>Any database</li>
-  <li>Kafka</li>    
-</ol>
+### Prerrequisitos
+- Node.js 20
+- Docker 
 
-We do provide a `Dockerfile` to help you get started with a dev environment.
+### Instalación
 
-You must have two resources:
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd app-nodejs-code-challenge
 
-1. Resource to create a transaction that must containt:
+# Instalar dependencias
+npm install
+```
 
-```json
-{
-  "accountExternalIdDebit": "Guid",
-  "accountExternalIdCredit": "Guid",
-  "tranferTypeId": 1,
-  "value": 120
+### Variables de Entorno
+
+Crear archivo `.env`:
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=transactions
+
+# Kafka
+KAFKA_BROKERS=localhost:9092
+KAFKA_GROUP_ID=transaction-service
+
+# Application
+PORT=3000
+```
+
+## ▶️ Ejecución del Proyecto
+
+### Docker (Opcional)
+
+```bash
+# Levantar servicios con Docker Compose
+docker-compose up -d
+```
+
+### Desarrollo
+
+```bash
+# Modo desarrollo con hot reload
+npm run start:dev
+
+# Modo desarrollo estándar
+npm run start
+
+# Modo producción
+npm run start:prod
+```
+
+## 🧪 Pruebas con GraphQL
+
+### Acceder al GraphQL Playground
+Navega a: **http://localhost:3000/graphql**
+
+### 1. Crear Transacción
+
+```graphql
+mutation CreateTransaction {
+  createTransaction(input: {
+    accountExternalIdDebit: "550e8400-e29b-41d4-a716-446655440001",
+    accountExternalIdCredit: "550e8400-e29b-41d4-a716-446655440002",
+    tranferTypeId: 1,
+    value: 1200
+  }) {
+    id
+    transactionExternalId
+    accountExternalIdDebit
+    accountExternalIdCredit
+    value
+    currency
+    createdAt
+    status {
+      id
+      name
+    }
+  }
 }
 ```
 
-2. Resource to retrieve a transaction
+### 2. Consultar Transacción Específica
 
-```json
-{
-  "transactionExternalId": "Guid",
-  "transactionType": {
-    "name": ""
-  },
-  "transactionStatus": {
-    "name": ""
-  },
-  "value": 120,
-  "createdAt": "Date"
+```graphql
+query GetTransaction {
+  transaction(transactionExternalId: "b958b855-d3df-4d6e-8fa1-4883239ae86c") {
+    id
+    transactionExternalId
+    accountExternalIdDebit
+    accountExternalIdCredit
+    value
+    currency
+    createdAt
+    updatedAt
+    status {
+      id
+      name
+    }
+    transferType {
+      id
+      name
+    }
+  }
 }
 ```
 
-## Optional
+### 3. Listar Todas las Transacciones
 
-You can use any approach to store transaction data but you should consider that we may deal with high volume scenarios where we have a huge amount of writes and reads for the same data at the same time. How would you tackle this requirement?
+```graphql
+query GetAllTransactions {
+  transactions {
+    id
+    transactionExternalId
+    accountExternalIdDebit
+    accountExternalIdCredit
+    value
+    currency
+    createdAt
+    updatedAt
+    status {
+      id
+      name
+    }
+    transferType {
+      id
+      name
+    }
+  }
+}
+```
 
-You can use Graphql;
+### 4. Ejemplos de Transacciones para Pruebas
 
-# Send us your challenge
+#### Transacción que será **RECHAZADA** (monto alto):
+```graphql
+mutation CreateHighValueTransaction {
+  createTransaction(input: {
+    accountExternalIdDebit: "11111111-1111-1111-1111-111111111111",
+    accountExternalIdCredit: "22222222-2222-2222-2222-222222222222",
+    tranferTypeId: 1,
+    value: 5000  # > 1000, será rechazada
+  }) {
+    transactionExternalId
+    value
+    status { name }
+  }
+}
+```
 
-When you finish your challenge, after forking a repository, you **must** open a pull request to our repository. There are no limitations to the implementation, you can follow the programming paradigm, modularization, and style that you feel is the most appropriate solution.
+#### Transacción que será **APROBADA** (monto normal):
+```graphql
+mutation CreateNormalTransaction {
+  createTransaction(input: {
+    accountExternalIdDebit: "33333333-3333-3333-3333-333333333333",
+    accountExternalIdCredit: "44444444-4444-4444-4444-444444444444",
+    tranferTypeId: 2,
+    value: 250   # < 1000, será aprobada
+  }) {
+    transactionExternalId
+    value
+    status { name }
+  }
+}
+```
 
-If you have any questions, please let us know.
+## 📊 Flujo de Procesamiento
+
+1. **Creación**: Se crea una transacción vía GraphQL API
+2. **Persistencia**: La transacción se guarda con estado "Pending"
+3. **Evento Outbox**: Se genera un evento en la tabla `outbox`
+4. **Débezium CDC**: Captura el cambio y publica a Kafka
+5. **Evaluación Antifraud**: El servicio antifraud procesa la transacción
+6. **Decisión**: Se aplican reglas y se toma una decisión
+7. **Actualización**: El estado se actualiza a "Approved" o "Rejected"
+8. **Auditoría**: Se mantiene historial completo de cambios
+
+## 🔍 Reglas Antifraud Implementadas
+
+- **Alto Valor**: Transacciones > $1000 son rechazadas
+- **Validación de Cuentas**: Formato UUID válido requerido
+
+---
+
+*Construido con ❤️ usando NestJS y las mejores prácticas de arquitectura distribuida*
