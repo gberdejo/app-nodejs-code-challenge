@@ -32,7 +32,7 @@ import {
           Outbox,
           EventConsumption,
         ],
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: false,
         logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],

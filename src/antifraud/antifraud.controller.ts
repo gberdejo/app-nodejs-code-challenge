@@ -43,7 +43,7 @@ export class AntifraudController {
 
       const payload = JSON.parse(data.after.payload) as PayloadEvent;
 
-      this.antifraudService.evaluateTransaction(payload);
+      await this.antifraudService.evaluateTransaction(payload);
 
       this.logger.log(
         `Successfully processed transaction.created for: ${payload.transactionId}`,
