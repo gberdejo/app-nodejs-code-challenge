@@ -1,0 +1,35 @@
+{
+  "name": "pg-transactions-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "postgres",
+    "database.dbname": "transactions",
+
+    "topic.prefix": "pg",
+    "plugin.name": "pgoutput",
+
+    "slot.name": "debezium_slot",
+    "slot.drop.on.stop": "false",
+
+    "publication.name": "dbz_publication",
+    "publication.autocreate.mode": "filtered",
+
+    "snapshot.mode": "initial",
+    "tombstones.on.delete": "false",
+
+    "schema.include.list": "public",
+    "table.include.list": "public.outbox",
+
+    "decimal.handling.mode": "string",
+    "time.precision.mode": "connect",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false"
+  }
+}

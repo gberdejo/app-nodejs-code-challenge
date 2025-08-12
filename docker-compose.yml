@@ -49,30 +49,29 @@ services:
     ports:
       - "8083:8083" # REST API de Kafka Connect
     environment:
-      # Conectarse al broker por el listener interno
+
       - BOOTSTRAP_SERVERS=kafka:29092
-
-      # Nombre del cluster de Connect
       - GROUP_ID=connect-cluster
-
-      # Tópicos internos de Connect
       - CONFIG_STORAGE_TOPIC=connect_configs
       - OFFSET_STORAGE_TOPIC=connect_offsets
       - STATUS_STORAGE_TOPIC=connect_statuses
-
-      # Con un solo broker, aseguramos replication factor = 1
       - CONFIG_STORAGE_REPLICATION_FACTOR=1
       - OFFSET_STORAGE_REPLICATION_FACTOR=1
       - STATUS_STORAGE_REPLICATION_FACTOR=1
-
-      # Converters a JSON (más fácil para pruebas)
       - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
       - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
       - KEY_CONVERTER_SCHEMAS_ENABLE=false
       - VALUE_CONVERTER_SCHEMAS_ENABLE=false
-
-      # Permite usar funciones de scripting en Debezium si las necesitas
       - ENABLE_DEBEZIUM_SCRIPTING=true
+  
+  init-connector:
+    image: curlimages/curl:8.10.1
+    depends_on:
+      - kafka-connect
+    volumes:
+      - ./register-postgres-connector.json:/config/register-postgres-connector.json
+      - ./init-connector.sh:/init-connector.sh
+    entrypoint: ["/bin/sh", "/init-connector.sh"]
 
 volumes:
   pgdata:
