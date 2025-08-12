@@ -73,5 +73,25 @@ services:
       - ./init-connector.sh:/init-connector.sh
     entrypoint: ["/bin/sh", "/init-connector.sh"]
 
+  nestjs-app:
+    build: .
+    container_name: nestjs-transaction-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=transactions
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_CLIENT_ID=transaction-service
+      - KAFKA_GROUP_ID=transaction-group
+    restart: unless-stopped
+
 volumes:
   pgdata:

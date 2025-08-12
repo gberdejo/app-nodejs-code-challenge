@@ -23,7 +23,7 @@ import {
         options: {
           client: {
             clientId: 'antifraud-producer',
-            brokers: ['localhost:9092'],
+            brokers: (process.env.KAFKA_BROKERS ?? 'localhost:9092').split(','),
           },
           producer: {
             allowAutoTopicCreation: true,
